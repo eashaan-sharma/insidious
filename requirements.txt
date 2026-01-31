@@ -1,1 +1,16 @@
+torch
+torchvision
+torchaudio
+timm
+opencv-python
+numpy
+pandas
+scikit-learn
+matplotlib
+pillow
+tqdm
+fastapi
+uvicorn
+streamlit
+grad-cam
 
