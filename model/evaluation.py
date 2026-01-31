@@ -2,7 +2,6 @@ import torch
 import torch.nn.functional as F
 from model_def import get_model
 from dataset import get_dataloader
-from inference import load_model
 from gradcam import generate_gradcam
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -25,30 +24,36 @@ def evaluate_model(weights_path, save_cams=False):
     TP = FP = TN = FN = 0
     confidences = []
 
-    with torch.no_grad():
-        for idx, (image, label) in enumerate(val_loader):
-            image = image.to(device)
-            label = label.to(device)
+    for idx, (image, label) in enumerate(val_loader):
+        image = image.to(device)
+        label = label.to(device)
 
+        # -------- Evaluation (NO gradients) --------
+        with torch.no_grad():
             outputs = model(image)
             probs = F.softmax(outputs, dim=1)
             confidence, pred = torch.max(probs, dim=1)
 
-            confidences.append(confidence.item())
+        confidences.append(confidence.item())
 
-            # Confusion matrix
-            if label.item() == 1 and pred.item() == 1:
-                TP += 1
-            elif label.item() == 0 and pred.item() == 1:
-                FP += 1
-            elif label.item() == 0 and pred.item() == 0:
-                TN += 1
-            elif label.item() == 1 and pred.item() == 0:
-                FN += 1
+        # Confusion matrix
+        if label.item() == 1 and pred.item() == 1:
+            TP += 1
+        elif label.item() == 0 and pred.item() == 1:
+            FP += 1
+        elif label.item() == 0 and pred.item() == 0:
+            TN += 1
+        elif label.item() == 1 and pred.item() == 0:
+            FN += 1
 
-            # Optional: save Grad-CAM for interesting cases
-            if save_cams and idx < 10:
-                generate_gradcam(model, image, save_path=f"static/heatmaps/sample_{idx}.png")
+        # -------- Grad-CAM (WITH gradients) --------
+        if save_cams and idx < 10:
+            generate_gradcam(
+                model,
+                image,
+                save_dir="static/heatmaps",
+                filename=f"sample_{idx}.png"
+            )
 
     # Metrics
     accuracy = (TP + TN) / (TP + TN + FP + FN + 1e-8)
