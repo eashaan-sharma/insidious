@@ -1,7 +1,8 @@
 import torch
-from model_def import get_model
-from uncertainty import assign_risk
-from gradcam import generate_gradcam
+from model.model_def import get_model
+from model.uncertainty import assign_risk
+from model.gradcam import generate_gradcam
+
 
 def load_model(weights_path=None):
     model = get_model()
