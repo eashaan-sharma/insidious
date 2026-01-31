@@ -1,27 +1,57 @@
-import React from "react";
+import React, { useState } from "react";
+import "./App.css";
 
 function App() {
+  const [preview, setPreview] = useState(null);
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setPreview(URL.createObjectURL(file));
+    }
+  };
+
   return (
-    <div style={{ padding: "40px", fontFamily: "Arial" }}>
-      <h1>AI-Assisted Pneumonia Detection</h1>
+    <div className="app-container">
+      
+      <div className="header-section">
+        <h1>Pneumonia Detection Tool</h1>
+        <p>Upload an X-ray for AI-Assisted analysis.</p>
+      </div>
 
-      <p>Upload a chest X-ray image for analysis.</p>
+      <div className="upload-section">
+        <label className="file-upload">
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleFileChange}
+          />
+          <span>Browse and upload X-ray Image</span>
+        </label>
+      </div>
 
-      <input type="file" accept="image/*" />
-      <br /><br />
 
-      <button>Predict</button>
+      {preview && (
+        <div className="preview-section">
+          <img src={preview} alt="X-ray preview" />
+        </div>
+      )}
 
-      <p style={{ marginTop: "20px" }}>
-        <b>Prediction:</b> Pneumonia (Demo)
-      </p>
+      <div className="action-section">
+        <button disabled={!preview}>Analyse</button>
+      </div>
 
-      <p>
-        <b>Model:</b> Swin Transformer
-      </p>
+      <div className="result-section">
+        <p>
+          <b>Prediction:</b> Pneumonia (Demo)
+        </p>
+        <p>
+          <b>Model:</b> Swin Transformer
+        </p>
+      </div>
+
     </div>
   );
 }
 
 export default App;
-
