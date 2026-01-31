@@ -12,11 +12,11 @@ function App() {
     if (selectedFile) {
       setFile(selectedFile);
       setPreview(URL.createObjectURL(selectedFile));
-      setResult(null); // reset previous result
+      setResult(null);
     }
   };
 
-  const handleAnalyse = () => {
+  const handleAnalyse = async () => {
     if (!file) {
       alert("Please upload an image first");
       return;
@@ -25,14 +25,36 @@ function App() {
     setLoading(true);
     setResult(null);
 
-    // Simulated backend response
-    setTimeout(() => {
-      setResult({
-        label: "Pneumonia",
-        confidence: 0.87,
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const response = await fetch("http://127.0.0.1:8000/predict", {
+        method: "POST",
+        body: formData,
       });
+
+      if (!response.ok) {
+        throw new Error("Backend request failed");
+      }
+
+      const data = await response.json();
+
+      setResult({
+        label:
+          data.prediction === 0
+            ? "Normal"
+            : data.prediction === 1
+            ? "Pneumonia"
+            : "Other",
+        confidence: data.confidence,
+        heatmap_path: data.heatmap_path,
+      });
+    } catch (err) {
+      alert(err.message);
+    } finally {
       setLoading(false);
-    }, 1500);
+    }
   };
 
   return (
@@ -76,6 +98,15 @@ function App() {
             <p>
               <b>Confidence:</b> {Math.round(result.confidence * 100)}%
             </p>
+
+            {result.heatmap_path && (
+              <div className="heatmap-section">
+                <img
+                  src={`http://127.0.0.1:8000/${result.heatmap_path}`}
+                  alt="Grad-CAM Heatmap"
+                />
+              </div>
+            )}
           </>
         )}
       </div>
