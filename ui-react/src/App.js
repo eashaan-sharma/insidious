@@ -38,12 +38,12 @@ function App() {
       )}
 
       <div className="action-section">
-        <button disabled={!preview}>Analyse</button>
+        <button>Analyse</button>
       </div>
 
       <div className="result-section">
         <p>
-          <b>Prediction:</b> Pneumonia (Demo)
+          <b>Prediction:</b> Demonstrative
         </p>
         <p>
           <b>Model:</b> Swin Transformer
