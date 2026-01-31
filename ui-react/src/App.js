@@ -1,27 +1,74 @@
-import React from "react";
+import React, { useState } from "react";
+import "./App.css";
 
 function App() {
+  const [preview, setPreview] = useState(null);
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setPreview(URL.createObjectURL(file));
+    }
+  };
+
   return (
-    <div style={{ padding: "40px", fontFamily: "Arial" }}>
-      <h1>AI-Assisted Pneumonia Detection</h1>
+    <div className="app-container">
+      <header className="top-bar">
+        <h1>Radiology AI Console</h1>
+        <span className="status-dot">● System Ready</span>
+      </header>
 
-      <p>Upload a chest X-ray image for analysis.</p>
+      <div className="main-grid">
 
-      <input type="file" accept="image/*" />
-      <br /><br />
+        {/* LEFT PANEL */}
+        <div className="panel input-panel">
+          <h2>Input X-ray</h2>
 
-      <button>Predict</button>
+          <label className="file-upload">
+            <input type="file" accept="image/*" onChange={handleFileChange} />
+            <span>Upload Chest X-ray</span>
+          </label>
 
-      <p style={{ marginTop: "20px" }}>
-        <b>Prediction:</b> Pneumonia (Demo)
-      </p>
+          {preview && (
+            <div className="preview-box">
+              <img src={preview} alt="X-ray preview" />
+            </div>
+          )}
+        </div>
 
-      <p>
-        <b>Model:</b> Swin Transformer
-      </p>
+        {/* RIGHT PANEL */}
+        <div className="panel analysis-panel">
+          <h2>AI Analysis Summary</h2>
+
+          <div className="metric">
+            <span className="metric-label">Prediction</span>
+            <span className="metric-value">Normal</span>
+          </div>
+
+          <div className="metric">
+            <span className="metric-label">Confidence</span>
+            <span className="metric-value warning">58%</span>
+          </div>
+
+          <div className="alert-box">
+            ⚠️ Low confidence detected.  
+            Manual review is recommended.
+          </div>
+
+          <div className="model-info">
+            Model: Swin Transformer  
+            <br />
+            Mode: Uncertainty-aware screening
+          </div>
+        </div>
+
+      </div>
+
+      <footer className="footer-note">
+        Decision-support only • Not a diagnostic system
+      </footer>
     </div>
   );
 }
 
 export default App;
-
