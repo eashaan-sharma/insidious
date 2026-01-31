@@ -1,5 +1,6 @@
 from fastapi import FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from PIL import Image
 import torch
 from torchvision import transforms
@@ -15,6 +16,11 @@ from model.inference import load_model, predict
 # App init
 # ------------------
 app = FastAPI(title="Pneumonia Detection API")
+BASE_DIR = os.path.dirname(os.path.dirname(__file__))
+STATIC_DIR = os.path.join(BASE_DIR, "static")
+
+app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+
 
 app.add_middleware(
     CORSMiddleware,
