@@ -9,6 +9,8 @@ from model.gradcam import (
     overlay_heatmap_on_image,
     localize_from_heatmap
 )
+import uuid
+
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 def load_model(weights_path=None):
@@ -30,7 +32,16 @@ def predict(image_tensor,model):
         probs = F.softmax(logits, dim=1)
         confidence, pred = torch.max(probs, dim=1)
 
-    heatmap_path = generate_gradcam(model, image_tensor)
+    unique_id = str(uuid.uuid4())
+
+    heatmap_filename = f"cam_{unique_id}.png"
+    heatmap_path = generate_gradcam(
+        model,
+        image_tensor,
+        filename=heatmap_filename
+    )
+
+
 
     risk_flag = (
         "high_risk" if confidence.item() > 0.8
@@ -47,8 +58,10 @@ def predict(image_tensor,model):
         pil_image = transforms.ToPILImage()(image_tensor.squeeze().cpu())
         overlay = overlay_heatmap_on_image(pil_image, heatmap_path)
 
-        overlay_path = "static/heatmaps/overlay.png"
+        overlay_filename = f"overlay_{unique_id}.png"
+        overlay_path = f"static/heatmaps/{overlay_filename}"
         cv2.imwrite(overlay_path, overlay)
+
 
         boxes = localize_from_heatmap(heatmap_path)
 

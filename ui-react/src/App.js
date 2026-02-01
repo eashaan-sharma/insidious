@@ -49,6 +49,7 @@ function App() {
             : "Other",
         confidence: data.confidence,
         heatmap_path: data.heatmap_path,
+        overlay_path:data.overlay_path,
       });
     } catch (err) {
       alert(err.message);
@@ -102,8 +103,12 @@ function App() {
             {result.heatmap_path && (
               <div className="heatmap-section">
                 <img
-                  src={`http://127.0.0.1:8000/${result.heatmap_path}`}
-                  alt="Grad-CAM Heatmap"
+                  src={`http://127.0.0.1:8000/${result.overlay_path}`}
+                  alt="Grad-CAM Heatmap with overlay"
+                />
+                <img
+                src={`http://127.0.0.1:8000/${result.heatmap_path}`}
+                alt="Heatmap"
                 />
               </div>
             )}
