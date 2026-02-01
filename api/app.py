@@ -36,7 +36,7 @@ app.add_middleware(
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
-WEIGHTS_PATH = os.path.join(BASE_DIR, "model", "cnn_weights.pth")
+WEIGHTS_PATH = os.path.join(BASE_DIR, "model", "experiments/resnet_uncertainty_3epochs.pth")
 
 model = load_model(WEIGHTS_PATH)
 model.to(device)

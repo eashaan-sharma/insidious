@@ -1,53 +1,65 @@
 import torch
+import torch.nn.functional as F
+import cv2
+import numpy as np
+from torchvision import transforms
 from model.model_def import get_model
-from model.uncertainty import assign_risk
-from model.gradcam import generate_gradcam
+from model.gradcam import (
+    generate_gradcam,
+    overlay_heatmap_on_image,
+    localize_from_heatmap
+)
 
-
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 def load_model(weights_path=None):
     model = get_model()
     if weights_path:
         model.load_state_dict(torch.load(weights_path, map_location="cpu"))
     model.eval()
     return model
-
-def predict(image_tensor, model):
+def predict(image_tensor,model):
     """
-    Returns prediction, confidence, risk flag, heatmap
-    """
-    image_tensor = image_tensor.to(next(model.parameters()).device)
+    model = get_model(num_classes=2)
+    model.load_state_dict(torch.load('model\experiments\resnet_uncertainty_3epochs.pth', map_location=device))
+    model.to(device)"""
+    
+    model.eval()
 
     with torch.no_grad():
-        outputs = model(image_tensor)
-        probs = torch.softmax(outputs, dim=1)
-        confidence, pred_class = torch.max(probs, dim=1)
+        logits = model(image_tensor)
+        probs = F.softmax(logits, dim=1)
+        confidence, pred = torch.max(probs, dim=1)
 
-    risk_flag = assign_risk(confidence.item())
     heatmap_path = generate_gradcam(model, image_tensor)
 
-
-    return {
-        "prediction": int(pred_class.item()),
-        "confidence": float(confidence.item()),
-        "risk_flag": risk_flag,
-        "heatmap_path": heatmap_path
-    }
-if __name__ == "__main__":
-    import torch
-    from dataset import get_dataloader
-
-    model = load_model("cnn_weights.pth")
-
-    test_loader = get_dataloader(
-        data_dir="../chest_xray/val",
-        batch_size=1,
-        train=False
+    risk_flag = (
+        "high_risk" if confidence.item() > 0.8
+        else "review_recommended"
     )
 
-    for i, (image, label) in enumerate(test_loader):
-        if i == 5:
-            break
+    # --------------------
+    # NEW: overlay + boxes
+    # --------------------
+    overlay_path = None
+    boxes = None
 
-        result = predict(image, model)
-        print("GT:", label.item(), "Pred:", result)
+    try:
+        pil_image = transforms.ToPILImage()(image_tensor.squeeze().cpu())
+        overlay = overlay_heatmap_on_image(pil_image, heatmap_path)
 
+        overlay_path = "static/heatmaps/overlay.png"
+        cv2.imwrite(overlay_path, overlay)
+
+        boxes = localize_from_heatmap(heatmap_path)
+
+    except Exception as e:
+        print("Explainability extension failed:", e)
+
+    return {
+        "prediction": int(pred.item()),
+        "confidence": float(confidence.item()),
+        "risk_flag": risk_flag,
+        "heatmap_path": heatmap_path,
+        "overlay_path": overlay_path,
+        "boxes": boxes
+    }

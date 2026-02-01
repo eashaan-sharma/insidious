@@ -47,7 +47,7 @@ def generate_gradcam(model, input_tensor, save_dir="static/heatmaps", filename="
 
     model.eval()  # IMPORTANT
 
-    cam_generator = GradCAM(model, model.layer4)
+    cam_generator = GradCAM(model, model.layer4[-1])
 
     # forward + backward happens INSIDE generate()
     output = model(input_tensor)
@@ -60,3 +60,21 @@ def generate_gradcam(model, input_tensor, save_dir="static/heatmaps", filename="
     cv2.imwrite(heatmap_path, heatmap)
 
     return heatmap_path
+def overlay_heatmap_on_image(original_image, heatmap_path, alpha=0.4):
+    img = np.array(original_image.resize((224,224)))[:,:,::-1]
+    heatmap = cv2.imread(heatmap_path)
+
+    overlay = cv2.addWeighted(img, 1 - alpha, heatmap, alpha, 0)
+    return overlay
+
+
+def localize_from_heatmap(heatmap_path, threshold=150):
+    heatmap_color = cv2.imread(heatmap_path)
+    heatmap_gray = cv2.cvtColor(heatmap_color, cv2.COLOR_BGR2GRAY)
+
+    _, thresh = cv2.threshold(heatmap_gray, threshold, 255, cv2.THRESH_BINARY)
+    contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+    boxes = [cv2.boundingRect(c) for c in contours]
+    return boxes
+
